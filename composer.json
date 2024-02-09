@@ -13,7 +13,8 @@
 	],
 	"require": {
 		"typo3/cms-core": "^12.4",
-		"league/oauth2-client": "^2.7"
+		"league/oauth2-client": "^2.7",
+		"thenetworg/oauth2-azure": "^2.2"
 	},
 	"autoload": {
 		"psr-4": {
