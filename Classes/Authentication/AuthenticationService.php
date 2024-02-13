@@ -60,7 +60,7 @@ class AuthenticationService extends AuthService
             setcookie('OAuth2UserId', '', time() - 3600, '/', '', true, true);
 
             $oauth2UserId = base64_decode($_COOKIE['OAuth2UserId']);
-            return $this->userService->find($oauth2UserId);
+            return $this->userService->findByExternalId($oauth2UserId);
         }
 
         return parent::getUser();

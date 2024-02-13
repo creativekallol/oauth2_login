@@ -130,8 +130,8 @@ class TokenController extends ActionController
                     $me = $this->provider->get($this->provider->getRootMicrosoftGraphUri($token) . '/v1.0/me', $token);
                     setcookie('OAuth2UserId', base64_encode($me['id']), time() + 300, '/', '', true, true);
 
-                    // Check if user is available with the Oauth2 Provider Id
-                    $user = $this->userService->find($me['id']);
+                    // Check if user is available with the registered email
+                    $user = $this->userService->findByEmail($me['mail']);
                     if (empty($user)) {
                         $newUser = [
                             'id' => $me['id'],
@@ -143,6 +143,10 @@ class TokenController extends ActionController
                             'usergroup' => $this->extConfig['feUserGroups'],
                         ];
                         $this->userService->addUser($newUser);
+                    } else {
+                        if (empty($user['oauth2_user_id'])) {
+                            $this->userService->updateOauth2Info($user['uid'], $me['id']);
+                        }
                     }
 
                     return new RedirectResponse(trim($this->extConfig['feUserRedirectUri']), 302);

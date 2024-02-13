@@ -35,11 +35,16 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class UserService
 {
+    protected ConnectionPool $connectionPool;
+
+    public function __construct()
+    {
+        $this->connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+    }
+
     public function addUser(array $externalUser): void
     {
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-
-        $connectionPool->getConnectionForTable('fe_users')
+        $this->connectionPool->getConnectionForTable('fe_users')
             ->insert(
                 'fe_users',
                 [
@@ -58,10 +63,28 @@ class UserService
             );
     }
 
-    public function find(string $externalUserId): array
+    public function findByEmail(string $email): array
     {
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getQueryBuilderForTable('fe_users');
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('fe_users');
+
+        $result = $queryBuilder
+            ->select('*')
+            ->from('fe_users')
+            ->where(
+                $queryBuilder->expr()->eq('email', $queryBuilder->createNamedParameter($email, \PDO::PARAM_STR))
+            )
+            ->executeQuery();
+
+        while ($row = $result->fetchAssociative()) {
+            return $row;
+        }
+
+        return [];
+    }
+
+    public function findByExternalId(string $externalUserId): array
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('fe_users');
 
         $result = $queryBuilder
             ->select('*')
@@ -76,5 +99,21 @@ class UserService
         }
 
         return [];
+    }
+
+    public function updateOauth2Info(int $user, string $oauth2UserId): void
+    {
+        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('fe_users');
+
+        $queryBuilder
+            ->update('fe_users')
+            ->set('oauth2_user_id', $oauth2UserId)
+            ->where(
+                $queryBuilder->expr()->eq(
+                    'uid',
+                    $queryBuilder->createNamedParameter($user, \PDO::PARAM_INT)
+                )
+            )
+            ->executeStatement();
     }
 }
